@@ -1,5 +1,14 @@
 # ghibli-threejs
 
+> ## 🌿 A note from the author
+>
+> **While building my Ghibli river 3D project, I spent days iterating on it, one improvement
+> after another. The skills below are what I extracted from that work.**
+>
+> **If you like the visuals, effects and interactive features of
+> [riverbook.tanhoochuan.my](https://riverbook.tanhoochuan.my/), grab this repo and try them
+> yourself.**
+
 Agent skills for building a hand-painted, **Ghibli-style 3D world in three.js / WebGL**:
 realistic river water, toon-shaded foliage, painterly skies, a moonlit night, weather,
 swimming creatures, cinematic interaction, guided camera tours, and the headless-Blender →
