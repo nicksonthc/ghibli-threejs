@@ -1,0 +1,33 @@
+/* A quiet icon dock (bottom-left) with data-label tooltips, and a corner wordmark (bottom-right).
+   HTML: <div id="hud"><div id="views" hidden></div>
+           <div id="toggles"><button id="musicBtn" data-label="Music" aria-label="Music">♪</button> …</div></div>
+         <a id="sig" href="https://{{domain}}">{{name}}<span>.{{tld}}</span></a>
+   Block comments only: "//" is not a CSS comment and silently drops the next rule. */
+#hud { position:fixed; left:16px; bottom:16px; z-index:5; display:flex; flex-direction:column;
+  align-items:flex-start;               /* a flex column stretches children to the widest one: a lone dock needs this */
+  transition:opacity .6s; }
+#views[hidden] { display:none; }       /* `hidden` loses to any author display rule, e.g. #views { display:flex } */
+#toggles { display:flex; gap:4px; padding:4px; border-radius:999px; background:rgba(252,248,236,.28); backdrop-filter:blur(8px);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.35); opacity:.6; transition:opacity .4s, background .4s; }
+#toggles:hover, #toggles:focus-within { opacity:1; background:rgba(252,248,236,.7); }
+#toggles button { position:relative; width:30px; height:30px; padding:0; display:grid; place-items:center; font:14px/1 ui-rounded, system-ui;
+  border:0; border-radius:50%; background:transparent; color:#1f2a24; cursor:pointer; transition:background .25s, color .25s; }
+#toggles button:hover { background:rgba(255,255,255,.75); }
+#toggles button.on { background:#c8743a; color:#fff; }
+/* the label rises as a tooltip */
+#toggles button::before { content:attr(data-label); position:absolute; left:50%; bottom:calc(100% + 8px); transform:translate(-50%, 4px);
+  white-space:nowrap; pointer-events:none; font:500 10px/1 ui-rounded, system-ui; letter-spacing:.14em; text-transform:uppercase;
+  padding:5px 8px; border-radius:6px; background:rgba(31,42,36,.82); color:#fff7e6; opacity:0; transition:opacity .2s, transform .2s; }
+#toggles button:hover::before, #toggles button:focus-visible::before { opacity:1; transform:translate(-50%, 0); }
+/* "tap to start" hint as a pulsing ring instead of a text suffix */
+body.musicPending #musicBtn::after { content:''; position:absolute; inset:-2px; border-radius:50%; box-shadow:0 0 0 2px #c8743a; animation:pendingPulse 1.6s ease-out infinite; }
+@keyframes pendingPulse { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(1.5); } }
+/* wordmark: quiet until hovered */
+#sig { position:fixed; right:16px; bottom:16px; z-index:5; text-decoration:none; font:600 12px/1 ui-rounded, system-ui; letter-spacing:.06em;
+  color:rgba(255,255,255,.72); text-shadow:0 1px 6px rgba(0,0,0,.35); transition:color .3s, opacity .6s; }
+#sig span { color:#f0b27a; }
+#sig::after { content:''; position:absolute; left:4px; right:4px; bottom:-3px; height:1px; background:currentColor; transform:scaleX(0); transform-origin:right; transition:transform .4s; }
+#sig:hover { color:#fff; } #sig:hover::after { transform:scaleX(1); transform-origin:left; }
+/* hidden behind the loading curtain, while reading, and during the tour */
+body.loading #hud, body.loading #sig, body.reading #hud, body.reading #sig, body.touring #hud, body.touring #sig { opacity:0; pointer-events:none; }
+@media (max-width:640px){ #sig { right:12px; bottom:12px; font-size:11px; } #hud { left:12px; bottom:12px; } }

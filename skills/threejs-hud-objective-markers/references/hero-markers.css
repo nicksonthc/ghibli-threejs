@@ -1,0 +1,33 @@
+/* Objective-marker badges. Positioned by JS through --x / --y / --a. Adapt --hue per hero.
+   NOTE: comments in CSS must be block comments. A trailing "// ..." swallows the next selector. */
+#heroes { position:fixed; inset:0; pointer-events:none; z-index:5; }
+.hero { --x:50vw; --y:50vh; --a:0deg; --hue:#2f7d6d; position:absolute; left:0; top:0;
+  transform:translate3d(var(--x), var(--y), 0) translate(-50%, -50%) scale(.82);
+  display:flex; align-items:center; gap:9px; padding:5px 13px 5px 5px; border:0; border-radius:999px; cursor:pointer; pointer-events:none; opacity:0;
+  font:500 12px/1.15 ui-rounded, system-ui; color:#1f2a24; text-align:left;
+  background:linear-gradient(135deg, rgba(252,248,236,.9), rgba(252,248,236,.72)); backdrop-filter:blur(12px) saturate(1.2);
+  box-shadow:0 8px 26px rgba(15,35,28,.28), inset 0 0 0 1px rgba(255,255,255,.65);
+  transition:opacity .35s, transform .35s cubic-bezier(.2,.8,.2,1.2), padding .3s, box-shadow .3s; will-change:transform; }
+.hero.show { opacity:1; pointer-events:auto; transform:translate3d(var(--x), var(--y), 0) translate(-50%, -50%) scale(1); }
+.hero .badge { position:relative; width:34px; height:34px; flex:none; border-radius:50%; display:grid; place-items:center; color:#fff; background:var(--hue); }
+.hero .ring { position:absolute; inset:-3px; border-radius:50%; box-shadow:0 0 0 2px color-mix(in srgb, var(--hue) 75%, transparent); animation:heroPing 2.4s ease-out infinite; pointer-events:none; }
+@keyframes heroPing { from { transform:scale(1); opacity:1; } to { transform:scale(1.6); opacity:0; } }
+.hero .txt { display:flex; flex-direction:column; white-space:nowrap; }
+.hero .txt b { font-weight:700; font-size:12.5px; }
+.hero .txt small { font-size:10px; opacity:.72; display:flex; align-items:center; gap:4px; font-variant-numeric:tabular-nums; }
+.hero kbd { font:700 9px ui-rounded, system-ui; padding:1px 4px; border-radius:4px; background:rgba(31,42,36,.1); box-shadow:inset 0 -1px 0 rgba(31,42,36,.2); }
+/* the pointer under a floating badge */
+.hero::after { content:''; position:absolute; left:22px; bottom:-6px; width:12px; height:12px; transform:rotate(45deg); border-radius:0 0 3px 0; background:rgba(252,248,236,.8); }
+.hero.show:not(.edge) { animation:heroBob 3.2s ease-in-out infinite; }
+@keyframes heroBob { 50% { margin-top:-4px; } }
+/* edge-pinned: icon only, label expands on hover/focus, a chevron points the way */
+.hero.edge { padding:5px; gap:0; } .hero.edge::after { display:none; }
+.hero.edge .txt { max-width:0; overflow:hidden; opacity:0; transition:max-width .3s, opacity .25s; }
+.hero.edge:hover, .hero.edge:focus-visible { padding:5px 13px 5px 5px; gap:9px; }
+.hero.edge:hover .txt, .hero.edge:focus-visible .txt { max-width:180px; opacity:1; }
+.hero .chev { display:none; position:absolute; left:50%; top:50%; width:0; height:0; pointer-events:none; transform:rotate(var(--a)); }
+.hero.edge .chev { display:block; }
+.hero .chev::before { content:''; position:absolute; left:26px; top:-6px; border:6px solid transparent; border-left:9px solid var(--hue); filter:drop-shadow(0 1px 2px rgba(0,0,0,.25)); }
+.hero:focus-visible { outline:2px solid var(--hue); outline-offset:3px; }
+@media (prefers-reduced-motion: reduce){ .hero .ring, .hero.show:not(.edge) { animation:none; } }
+@media (max-width:640px){ .hero .txt small i { display:none; } }

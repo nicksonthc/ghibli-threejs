@@ -1,0 +1,105 @@
+<!-- Cinematic loading gate: markup, CSS and the petal/mote canvas. Trimmed from a working scene.
+     Adapt: title/tagline text, fonts (a handwriting web font such as Caveat), colours, and public/loading.jpg
+     (a still captured from the live scene's opening view). Put <body class="loading"> on the page. -->
+<style>
+  #loading { position:fixed; inset:0; overflow:hidden; z-index:10; cursor:default; user-select:none; background:#1d3a3c;
+    transition:opacity 1.4s cubic-bezier(.4,0,.2,1), transform 1.4s cubic-bezier(.4,0,.2,1), filter 1.4s; }
+  /* the still of the opening view; once ready it fades and the live render shows through the translucent curtain */
+  #loading .shot { position:absolute; inset:0; background:url(public/loading.jpg) center/cover no-repeat; animation:shotDrift 30s ease-in-out infinite alternate; transition:opacity 1.6s ease; }
+  @keyframes shotDrift { from { transform:scale(1.04); } to { transform:scale(1.07) translate(-.5%, -.4%); } }
+  #loading.ready .shot { opacity:0; }
+  #loading .tint { position:absolute; inset:0; background:linear-gradient(180deg, rgba(12,30,34,.45) 0%, rgba(12,30,34,.18) 40%, rgba(12,30,34,.12) 70%, rgba(12,30,34,.6) 100%); transition:opacity 1.6s; }
+  #loading.ready .tint { opacity:.8; }
+  #loading.ready { cursor:pointer; background:transparent; }
+  #loading.leave { opacity:0; transform:scale(1.06); filter:blur(8px); pointer-events:none; }
+  /* without a still: a painted dawn instead of .shot */
+  #loading.dawn { background:radial-gradient(40% 30% at 50% 62%, rgba(255,214,160,.85), rgba(255,214,160,0) 70%),
+    linear-gradient(180deg, #2c4b63 0%, #5b7f96 28%, #d9b48f 58%, #f2d3a6 66%, #6f8f7c 67%, #2f4c44 100%); }
+  /* optional god rays: a slowly turning conic gradient masked to a disc */
+  #loading .rays { position:absolute; left:50%; top:62%; width:160vmax; height:160vmax; transform:translate(-50%,-50%); opacity:.18; mix-blend-mode:screen;
+    background:repeating-conic-gradient(from 0deg, rgba(255,236,200,.9) 0deg 3deg, rgba(255,236,200,0) 3deg 14deg);
+    -webkit-mask:radial-gradient(circle, #000 0, transparent 60%); mask:radial-gradient(circle, #000 0, transparent 60%); animation:raysTurn 120s linear infinite; }
+  @keyframes raysTurn { to { transform:translate(-50%,-50%) rotate(360deg); } }
+  #loadFx { position:absolute; inset:0; width:100%; height:100%; }
+  #loading .mist { position:absolute; left:-30%; width:160%; height:26vh; opacity:.55; filter:blur(18px);
+    background:radial-gradient(60% 100% at 30% 50%, rgba(255,255,255,.55), rgba(255,255,255,0) 70%), radial-gradient(50% 100% at 75% 50%, rgba(255,255,255,.4), rgba(255,255,255,0) 70%); }
+  #loading .m1 { top:58%; animation:mistDrift 46s linear infinite alternate; }
+  #loading .m2 { top:62%; height:20vh; opacity:.28; animation:mistDrift 63s linear infinite alternate-reverse; }
+  #loading .m3 { top:48%; height:14vh; opacity:.25; animation:mistDrift 80s linear infinite alternate; }
+  @keyframes mistDrift { from { transform:translateX(-6%); } to { transform:translateX(6%); } }
+  #loading .vignette { position:absolute; inset:0; background:radial-gradient(120% 90% at 50% 45%, rgba(0,0,0,0) 55%, rgba(6,18,26,.55) 100%); }
+  #loading .grain { position:absolute; inset:0; opacity:.06; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+  #loading .intro { position:absolute; left:50%; top:40%; transform:translate(-50%,-50%); text-align:center; color:#fbf3e4; width:min(92vw, 720px); }
+  #loading .eyebrow { font:500 11px/1 ui-rounded, system-ui; letter-spacing:.42em; text-transform:uppercase; opacity:0; color:#ffe6bf; animation:riseIn 1.6s .3s cubic-bezier(.2,.7,.2,1) forwards; }
+  #loading h1 { margin:14px 0 6px; font:700 clamp(56px, 11vmin, 104px)/1 Caveat, cursive; letter-spacing:.14em; opacity:0; color:#fff7e6;
+    text-shadow:0 2px 0 rgba(60,40,20,.3), 0 0 28px rgba(255,236,200,.5), 0 12px 36px rgba(0,0,0,.55); animation:titleIn 2.2s .6s cubic-bezier(.2,.7,.2,1) forwards; }
+  @keyframes titleIn { from { opacity:0; letter-spacing:.34em; transform:translateY(12px); filter:blur(6px); } to { opacity:1; letter-spacing:.06em; transform:none; filter:none; } }
+  @keyframes riseIn { from { opacity:0; transform:translateY(10px); } to { opacity:.85; transform:none; } }
+  #loading .tag { margin:0; font:italic 500 clamp(17px, 2.4vmin, 22px)/1.3 Caveat, cursive; color:#ffe9c9; opacity:0; animation:riseIn 1.8s 1.4s cubic-bezier(.2,.7,.2,1) forwards; }
+  #bar { position:absolute; left:50%; bottom:15vh; transform:translateX(-50%); width:min(46vw, 300px); height:2px; background:rgba(255,240,215,.16); border-radius:2px; }
+  #bar i { display:block; height:100%; width:0; border-radius:2px; background:linear-gradient(90deg, rgba(255,214,150,.4), #ffe3a8); transition:width .5s cubic-bezier(.2,.7,.2,1); box-shadow:0 0 12px rgba(255,214,150,.9), 0 0 2px #fff; position:relative; }
+  #bar i::after { content:''; position:absolute; right:-3px; top:-3px; width:8px; height:8px; border-radius:50%; background:#fff6e0; box-shadow:0 0 14px 4px rgba(255,220,160,.8); }
+  #loadCap { position:absolute; left:50%; bottom:calc(15vh + 18px); transform:translateX(-50%); white-space:nowrap; font:500 12px/1 ui-rounded, system-ui; letter-spacing:.22em; text-transform:uppercase; color:#ffe6bf; opacity:.8; transition:opacity .4s; }
+  #loadCap.swap { opacity:0; }
+  #loading .enter { position:absolute; left:50%; bottom:15vh; transform:translate(-50%, 8px); font:600 clamp(20px, 3vmin, 26px)/1 Caveat, cursive; color:#fff7e6; opacity:0; pointer-events:none;
+    text-shadow:0 0 18px rgba(255,214,150,.7); transition:opacity .8s .4s, transform .8s .4s; }
+  #loading .enter small { display:block; margin-top:10px; font:500 11px/1 ui-rounded, system-ui; letter-spacing:.3em; text-transform:uppercase; opacity:.7; }
+  #loading.ready #bar, #loading.ready #loadCap { opacity:0; transition:opacity .5s; }
+  #loading.ready .enter { opacity:1; transform:translate(-50%, 0); animation:enterPulse 2.4s 1.2s ease-in-out infinite; }
+  @keyframes enterPulse { 50% { opacity:.55; } }
+  body.loading #hud, body.loading #sig { opacity:0; pointer-events:none; }
+</style>
+
+<div id="loading">
+  <div class="shot"></div><div class="tint"></div>
+  <!-- <div class="rays"></div> optional -->
+  <div class="mist m1"></div><div class="mist m2"></div><div class="mist m3"></div>
+  <canvas id="loadFx"></canvas>
+  <div class="vignette"></div><div class="grain"></div>
+  <div class="intro">
+    <div class="eyebrow">{{eyebrow}}</div>
+    <h1>{{Title}}</h1>
+    <p class="tag">{{tagline}}</p>
+  </div>
+  <div id="loadCap">{{first stage caption}}</div>
+  <div id="bar"><i></i></div>
+  <div class="enter"><span>tap anywhere to enter</span><small>sound on · headphones recommended</small></div>
+</div>
+
+<script>
+// petals and leaves drift down through the dawn light, motes glow and rise; stops when the gate leaves
+(() => {
+  const cv = document.getElementById('loadFx'), g = cv.getContext('2d'); let W, H, run = true, last = performance.now()
+  const fit = () => { W = cv.width = innerWidth*devicePixelRatio; H = cv.height = innerHeight*devicePixelRatio }; fit(); addEventListener('resize', fit)
+  const R = Math.random, P = [], D = devicePixelRatio
+  const petal = () => ({ k:'petal', x:R()*W, y:-R()*H, s:(6 + R()*8)*D, a:R()*6.28, va:(R() - .5)*1.4, vx:(10 + R()*18)*D, vy:(22 + R()*26)*D, ph:R()*6.28,
+    c:R() < .55 ? `hsla(${330 + R()*20},80%,${78 + R()*10}%,.9)` : `hsla(${88 + R()*30},55%,${42 + R()*16}%,.9)`, w:.45 + R()*.3 })
+  const mote = () => ({ k:'mote', x:R()*W, y:R()*H, r:(1 + R()*2.2)*D, vy:-(4 + R()*10)*D, ph:R()*6.28, o:.3 + R()*.5 })
+  for (let i = 0; i < 46; i++) P.push(petal()); for (let i = 0; i < 70; i++) P.push(mote())
+  function tick(now){
+    if (!run) return
+    const dt = Math.min(.05, (now - last)/1000), t = now/1000; last = now
+    g.clearRect(0, 0, W, H)
+    for (const p of P){
+      if (p.k === 'petal'){
+        p.x += (p.vx + Math.sin(t*.7 + p.ph)*14*D)*dt; p.y += p.vy*dt; p.a += p.va*dt
+        if (p.y > H + 20 || p.x > W + 40) Object.assign(p, petal(), { y:-20 })
+        const depth = .55 + .45*Math.sin(t*.9 + p.ph)                   // turning edge-on: thinner and dimmer
+        g.save(); g.translate(p.x, p.y); g.rotate(p.a); g.scale(1, p.w*depth)
+        g.fillStyle = p.c; g.globalAlpha = .55 + .4*depth; g.shadowColor = 'rgba(255,230,190,.6)'; g.shadowBlur = 6*D
+        g.beginPath(); g.ellipse(0, 0, p.s, p.s*.62, 0, 0, 6.283); g.fill(); g.restore()
+      } else {
+        p.y += p.vy*dt; p.x += Math.sin(t*.5 + p.ph)*6*D*dt
+        if (p.y < -10){ p.y = H + 10; p.x = R()*W }
+        g.globalAlpha = p.o*(.5 + .5*Math.sin(t*1.7 + p.ph)); g.fillStyle = '#ffe9c4'; g.shadowColor = 'rgba(255,220,160,.9)'; g.shadowBlur = 10*D
+        g.beginPath(); g.arc(p.x, p.y, p.r, 0, 6.283); g.fill()
+      }
+    }
+    g.globalAlpha = 1; g.shadowBlur = 0
+    requestAnimationFrame(tick)
+  }
+  requestAnimationFrame(tick)
+  window.__stopLoadFx = () => { run = false }
+})()
+</script>

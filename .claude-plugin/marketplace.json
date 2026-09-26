@@ -1,0 +1,11 @@
+{
+  "name": "ghibli-threejs",
+  "owner": { "name": "nicksonthc" },
+  "plugins": [
+    {
+      "name": "ghibli-threejs",
+      "source": "./",
+      "description": "three.js / WebGL skills for a hand-painted, Ghibli-style 3D world."
+    }
+  ]
+}
