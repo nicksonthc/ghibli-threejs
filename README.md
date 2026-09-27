@@ -29,30 +29,71 @@ Every skill was mined from one real project, a ~6,000-line single-file three.js 
 the **numbers that worked** and the **pitfalls that each cost a full iteration**, so you
 don't have to rediscover them.
 
-The skills follow the [Agent Skills](https://docs.claude.com/en/docs/agents-and-tools/agent-skills)
-format (`skills/<name>/SKILL.md` + optional `references/` code excerpts). They work in
-Claude Code, and any agent that reads SKILL.md files.
+The skills follow the [Agent Skills](https://agentskills.io/) format
+(`skills/<name>/SKILL.md` + optional `references/` code excerpts). Claude Code, Codex,
+Cursor, GitHub Copilot, Gemini CLI, OpenCode, and other agents that support this format
+can use them. Each agent discovers skills from its own install directories; the
+`skills/` directory in this repo is the source to install from.
 
 ## Install
 
-**Claude Code plugin (all skills):**
+Run install commands from the **project where you want to use the skills**, unless you
+choose a global install. You only need the skills relevant to your scene.
+
+### Choose skills and agents with `npx` (optional)
+
+If you have Node.js, the [skills CLI](https://github.com/vercel-labs/skills) can find
+this repo's skills and install them for the agents you select:
+
+```bash
+npx skills add nicksonthc/ghibli-threejs --list  # preview available skills
+npx skills add nicksonthc/ghibli-threejs         # choose skills and agents interactively
+```
+
+Add `-g` to the second command to install for your user across projects. `npx` is a
+convenience, not a requirement; the manual options below work without Node.js.
+
+### Claude Code plugin (all skills)
+
+Inside Claude Code, run:
 
 ```text
 /plugin marketplace add nicksonthc/ghibli-threejs
 /plugin install ghibli-threejs@ghibli-threejs
 ```
 
-**Or copy individual skills** into your personal or project skills folder:
+These `/plugin` commands are specific to Claude Code. The other agents use the
+Agent Skills folders below.
+
+### Copy skills manually
+
+From your target project, clone the source outside the project and copy an **entire
+skill folder** (including `references/`) into your agent's skills directory:
 
 ```bash
-git clone https://github.com/nicksonthc/ghibli-threejs
-cp -r ghibli-threejs/skills/threejs-webgl-realistic-water ~/.claude/skills/
-# or: .claude/skills/ inside your project
+git clone https://github.com/nicksonthc/ghibli-threejs /tmp/ghibli-threejs-skills
+mkdir -p .agents/skills
+cp -R /tmp/ghibli-threejs-skills/skills/threejs-webgl-realistic-water .agents/skills/
 ```
 
-Then just ask for the effect ("add realistic water with refraction to my river") and the
-matching skill loads. Each SKILL.md also has a **paste-ready prompt** with `{{slots}}` you
-can use directly.
+For a personal install, use `~/.agents/skills/` instead of `.agents/skills/`.
+The shared `.agents/skills/` path is recognized by most agents below; Claude Code
+uses `.claude/skills/` instead.
+
+| Agent / IDE | Project skills directory | Personal skills directory |
+|---|---|---|
+| [Claude Code](https://code.claude.com/docs/en/skills) | `.claude/skills/` | `~/.claude/skills/` |
+| [Codex](https://developers.openai.com/codex/skills/) | `.agents/skills/` | `~/.agents/skills/` |
+| [Cursor](https://cursor.com/docs/skills) | `.agents/skills/` or `.cursor/skills/` | `~/.agents/skills/` or `~/.cursor/skills/` |
+| [GitHub Copilot in VS Code](https://code.visualstudio.com/docs/agent-customization/agent-skills) | `.agents/skills/` or `.github/skills/` | `~/.agents/skills/` or `~/.copilot/skills/` |
+| [Gemini CLI](https://geminicli.com/docs/cli/creating-skills/) | `.agents/skills/` or `.gemini/skills/` | `~/.agents/skills/` or `~/.gemini/skills/` |
+| [OpenCode](https://opencode.ai/docs/skills) | `.agents/skills/` or `.opencode/skills/` | `~/.agents/skills/` or `~/.config/opencode/skills/` |
+| [Cascade / Windsurf](https://docs.windsurf.com/windsurf/cascade/skills) | `.agents/skills/` or `.devin/skills/` (`.windsurf/skills/` legacy) | `~/.agents/skills/` or `~/.codeium/windsurf/skills/` |
+
+Other agents may support `SKILL.md` but use different paths; check their docs or use
+the skills CLI's agent selector. After installation, start a new agent session if the
+skill is not discovered. Then ask for an effect ("add realistic water with refraction
+to my river") or use a skill's **paste-ready prompt** with its `{{slots}}` filled in.
 
 ## Skills
 
