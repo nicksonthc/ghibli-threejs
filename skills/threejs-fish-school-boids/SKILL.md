@@ -35,7 +35,8 @@ Water surface at y = 0, bed height `terrainHeight(x, z)`.
 >   `customDepthMaterial` the same patch.
 > - **Behaviour:** boids (cohesion, alignment, separation) plus wander; look ahead and turn away
 >   from the shallows; avoid rocks; occasional bursts; turn-rate-limited heading; roll into turns
->   (Euler `YXZ`); tail-beat frequency from speed; every few seconds one fish kisses the surface
+>   (Euler `YXZ`); a slow, natural tail beat (~0.65 Hz cruising, ~1 Hz in a burst) whose rate follows
+>   speed but is integrated into a phase on the CPU; every few seconds one fish kisses the surface
 >   and spawns a ripple. Give each fish a patrol home and expose count/speed/spacing/schooling/roam
 >   in a Tune folder.
 
@@ -48,9 +49,9 @@ Water surface at y = 0, bed height `terrainHeight(x, z)`.
 
 ### Shaders ([`references/koi-shader.js`](references/koi-shader.js))
 - **Swim:** `s = clamp((x + .30)/.58)` (0 tail, 1 snout); `amp = uAmp·(.010 + .085(1 − s)^2.2)`;
-  `z += amp·sin(x·10.5 − t·uSwim + phase)`; C-bend `z += uTurn·(x − .14)²·2.2`; pectorals
-  `y += R·(sin(t·beat + sideOffset)·.016 − fold·.004)`, tuck `z += R·side·fold·−.028`; flutter
-  `z += B·sin(7.5t + 28x + 37y)·.0045`.
+  `z += amp·sin(x·10.5 − uSwim + phase)`, where **`uSwim` is a phase** (see Behaviour); C-bend
+  `z += uTurn·(x − .14)²·2.2`; pectorals `y += R·(sin(uFinBeat + sideOffset)·.016 − fold·.004)`
+  (`uFinBeat` also a phase), tuck `z += R·side·fold·−.028`; flutter `z += B·sin(4.5t + 28x + 37y)·.0045`.
 - **Pattern:** `top = smoothstep(−.02, .035, y)`, belly `smoothstep(−.012, −.05, y)`, two-fbm
   noise; patches `smoothstep(.465, .495, n + top·.2 + head·.22 − .1)·(1 − belly)` — a narrow
   smoothstep gives crisp edges. Scale rows: `(x·105, atan(z, y)·8.5)` with odd rows offset by .5,
@@ -76,7 +77,10 @@ Water surface at y = 0, bed height `terrainHeight(x, z)`.
 - **Clamp steering acceleration ≤ 0.9**, target speed `.20 + .06 sin(…)` + bursts (`.28 sin(π·b/1.4)`,
   rate ~0.04/s), speed and depth eased with `1 − exp(−dt·k)` (frame-rate independent).
 - Heading: turn rate ≤ 1.5 rad/s; `turn` eased, bank `rotation.x = turn·.25` with Euler order `YXZ`;
-  shader `uSwim = 4.5 + 14·speed`, `uAmp = .6 + 1.4·speed + .8|turn|`, `uFold = smoothstep(speed, .3, .55)`.
+  `uAmp = .55 + 1.2·speed + .8|turn|`, `uFold = smoothstep(speed, .3, .55)`.
+- **Tail and fin beats are integrated phases:** rate `2.6 + 8·speed` rad/s (≈ 0.65 Hz cruising, ≈ 1 Hz
+  in a burst; real koi cruise well under 1 Hz), pectorals `1.6 + 1.6·(1 − fold)`; ease the rate with
+  `1 − exp(−1.5·dt)`, then `phase = (phase + rate·dt) mod 2000π` and upload the phase.
 - **Surface kiss:** every 5–11 s a random fish rises to y ≈ −0.09 for 3.2 s; when above −0.12 it
   writes a ripple slot `(x, z, amp .9, startTime)` just ahead of its snout.
 
@@ -93,6 +97,9 @@ faint steady silver emissive. See `threejs-ghibli-night-mode`.
 - **Absorption from vertical depth** (not view-ray thickness) in the water makes fish look grey.
 - **Flocking cohesion** makes koi collapse into one crowd that looks stuck — use patrol homes.
 - **Random-walk wander + unclamped steering** looks nervous; use sines, clamps and eased speed.
+- **`sin(uTime·rate)` with a speed-driven rate** makes the tail flick too fast and twitch: with page-time
+  `uTime` in the thousands, each small rate change jumps the phase by `uTime·Δrate`. Integrate the phase
+  on the CPU. A base rate above ~1 Hz also reads as frantic for a koi.
 - **A fully metallic ghost koi goes black** when the environment map dims at night.
 - **Tours/cinematics:** pointing the camera at a fish through hazy water fails and following one
   makes the camera jerk — stage fish instead (`threejs-camera-guided-tour`), flag them `scripted`
@@ -100,6 +107,7 @@ faint steady silver emissive. See `threejs-ghibli-night-mode`.
 - **Timers seeded at build with small absolute values** fire at once when the clock is page time.
 
 ## Verify
+- Close up: the tail sweeps slowly and evenly, with no flicker when a fish speeds up or turns.
 - Close up: patterns crisp and vividly coloured through the water, scales visible, fins translucent.
 - Shadows on the bed swim with the bodies.
 - Watch 60 s from above: fish spread along the river, no crowd, no jitter, no fish crossing the

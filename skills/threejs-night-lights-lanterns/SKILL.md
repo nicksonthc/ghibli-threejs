@@ -1,6 +1,6 @@
 ---
 name: threejs-night-lights-lanterns
-description: Adds warm night light and life to a three.js scene — floating paper lanterns drawn from one InstancedMesh and a canvas text atlas (aCell), fireflies and moths as single Points draw calls, glowing lotus and lily pads, low river mist, a hurricane oil lamp with an additive flame, paper chōchin lanterns, a boat-bow lantern that hangs plumb and swings as a damped pendulum, and the "one real point light follows the nearest source" pattern with lights pre-created at intensity 0. Use when a night scene needs a focal point, lanterns, fireflies, lamps, point lights without recompiles, or glowing props.
+description: Adds warm night light and life to a three.js scene — floating paper lanterns drawn from one InstancedMesh and a canvas text atlas (aCell), fireflies and moths as single Points draw calls, glowing lotus and lily pads, low river mist, a hurricane oil lamp with an additive flame, paper chōchin lanterns, a boat-bow lantern with a brushed word that hangs plumb and swings as a damped pendulum, and the "one real point light follows the nearest source" pattern with lights pre-created at intensity 0. Use when a night scene needs a focal point, lanterns, fireflies, lamps, point lights without recompiles, or glowing props.
 ---
 
 # Night lights, lanterns and river life
@@ -31,7 +31,7 @@ Stack: three.js `WebGLRenderer` (vanilla or R3F), `MeshStandardMaterial` patched
 > - A small oil lamp beside `{{focal character}}` with the only extra real light.
 > - ~110 fireflies (one `Points`, wander by summed sines, `pow(sin, 4)` blinks, never in sync),
 >   lily pads with a few faintly glowing lotus, and a very faint low mist masked to the river.
-> - Hang a `{{paper lantern}}` from a bent `{{bamboo}}` pole at the bow of `{{boat}}`. Keep it
+> - Hang a `{{paper lantern}}` with `{{word, e.g. 河畔}}` brushed down it from a bent `{{bamboo}}` pole at the bow of `{{boat}}`. Keep it
 >   plumb in the world and swing it as a damped pendulum from the boat's acceleration and rocking.
 >   By day it is unlit paper; at night the paper glows and one point light (created at intensity 0
 >   so night never recompiles) lights `{{character}}` and the water.
@@ -104,8 +104,10 @@ list stepped with k.
 Parent a pivot to the hull at the pole tip and each frame set
 `pivot.quaternion = inverse(hullWorldQuat) × swing(ax, az)`. Drive the swing with a spring
 (ω ≈ 6.5, damping ≈ 1.6) toward `−acceleration/g` plus a slow sine for wind; clamp ±0.5 rad.
-Paper is a lathe with a canvas texture (washi gradient, rib lines, vermilion end bands) as both
-`map` and `emissiveMap`. Move the shared, pre-created point light to just under the paper each
+Paper is a lathe with a 1024×512 canvas texture (washi gradient, rib lines, vermilion end bands and a
+word brushed vertically in a brush font) as both `map` and `emissiveMap`, so the ink reads dark on the
+lit paper. Put the word's copies on the lathe's diagonals (u = .125, .375, .625, .875), since u = 0 faces +Z
+and .25 faces +X, and repaint once the font has loaded. Move the shared, pre-created point light to just under the paper each
 frame. Code: [`references/boat-lantern-pendulum.js`](references/boat-lantern-pendulum.js).
 
 ## Pitfalls
@@ -117,6 +119,9 @@ frame. Code: [`references/boat-lantern-pendulum.js`](references/boat-lantern-pen
 - **Unpatched GLB materials** (a stone lantern) read flat next to the toon-shaded scene. Reuse an
   existing shader (e.g. the rocks' granite) and lift/tint the colour after its colour stage.
 - **Mist:** alpha 0.3 turned the whole night lavender; ~0.1 with sparse wisps.
+- **A word on a lathe lantern:** a narrow canvas (64 px round the whole circumference) leaves no room for
+  letters, and four copies on the axes look split in two from the usual 3/4 view. Use a wide canvas and
+  put the copies on the diagonals.
 - **Lantern emissive too high** flattens the handwriting into a white card; too low and it
   doesn't bloom. Stay just over the night bloom threshold.
 - **Additive sprites that were fine by day bloom at night.** Keep firefly peaks modest and put
@@ -127,6 +132,7 @@ frame. Code: [`references/boat-lantern-pendulum.js`](references/boat-lantern-pen
   deck/character without blowing out its own brass, the nearest-lantern light hands off smoothly
   as the camera moves, no frame hitch on the first night toggle (lights already exist).
 - Rock/accelerate the boat and watch the lantern lag and settle; freeze a frame mid-swing.
+- From a 3/4 view by day and at night, the word on the boat lantern reads whole and face-on, dark on the glow.
 
 ## Related skills
 `threejs-ghibli-night-mode` · `threejs-boat-buoyancy-steering` · `threejs-postprocessing-anime-grade` ·

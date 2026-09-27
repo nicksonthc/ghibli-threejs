@@ -7,16 +7,26 @@
 // created at intensity 0, `k` the night blend. Tip = pole tip position in the hull frame.
 import * as THREE from 'three'
 
-export function makeLanternPaperTexture() {
-  // washi gradient, darker rib lines, vermilion end bands — used as BOTH map and emissiveMap,
-  // so the ribs stay dark when the paper glows
-  const cv = document.createElement('canvas'); cv.width = 64; cv.height = 256; const g = cv.getContext('2d')
-  const grd = g.createLinearGradient(0, 0, 0, 256)
-  grd.addColorStop(0, '#f3d9a8'); grd.addColorStop(.5, '#fff3d6'); grd.addColorStop(1, '#f3d9a8')
-  g.fillStyle = grd; g.fillRect(0, 0, 64, 256)
-  g.fillStyle = 'rgba(120,80,40,.35)'; for (let y = 14; y < 244; y += 11) g.fillRect(0, y, 64, 2)
-  g.fillStyle = '#b8321f'; g.fillRect(0, 0, 64, 16); g.fillRect(0, 240, 64, 16)
-  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace
+export function makeLanternPaperTexture(word = '河畔', font = '"Ma Shan Zheng", "Kaiti SC", serif') {
+  // washi gradient, darker rib lines, vermilion end bands and a brushed word — used as BOTH map and emissiveMap,
+  // so the ribs and the ink stay dark against the glowing paper at night (the way a real chōchin reads).
+  // 1024×512: the paper wraps a full circle, so a 64 px-wide canvas leaves nothing for letters.
+  // LatheGeometry u runs +Z (u=0) → +X (.25) → −Z → −X; the word goes on the four DIAGONALS (u = .125, .375, …):
+  // a 3/4 view — the usual shot of a boat — then sees one copy face-on. Copies on the axes look split in two from 45°.
+  const cv = document.createElement('canvas'); cv.width = 1024; cv.height = 512; const g = cv.getContext('2d')
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4
+  const paint = () => {
+    const grd = g.createLinearGradient(0, 0, 0, 512)
+    grd.addColorStop(0, '#f3d9a8'); grd.addColorStop(.5, '#fff3d6'); grd.addColorStop(1, '#f3d9a8')
+    g.fillStyle = grd; g.fillRect(0, 0, 1024, 512)
+    g.fillStyle = 'rgba(120,80,40,.3)'; for (let y = 30; y < 486; y += 22) g.fillRect(0, y, 1024, 3)
+    g.fillStyle = '#b8321f'; g.fillRect(0, 0, 1024, 32); g.fillRect(0, 480, 1024, 32)
+    const chars = [...word], fs = Math.min(190, 400 / chars.length)           // stacked vertically, top to bottom
+    g.font = `${fs}px ${font}`; g.fillStyle = 'rgba(34,20,14,.92)'; g.textAlign = 'center'; g.textBaseline = 'middle'
+    for (const u of [.125, .375, .625, .875]) chars.forEach((ch, k) => g.fillText(ch, u * 1024, 256 + (k - (chars.length - 1) / 2) * fs * 1.02))
+    tex.needsUpdate = true
+  }
+  paint(); document.fonts?.load(`190px ${font}`, word).then(paint).catch(() => {})   // repaint once the brush font arrives
   return tex
 }
 

@@ -68,9 +68,12 @@ export function stepFish(F, dt, t, W) {
     f.obj.rotation.x = f.turn * .25                                            // roll into turns (Euler order YXZ)
     const spn = v.length()
     f.u.uTurn.value = -f.turn
-    f.u.uSwim.value = 4.5 + spn * 14                                           // tail-beat frequency from speed
-    f.u.uAmp.value = .6 + spn * 1.4 + Math.abs(f.turn) * .8
+    f.u.uAmp.value = .55 + spn * 1.2 + Math.abs(f.turn) * .8
     f.u.uFold.value = THREE.MathUtils.smoothstep(spn, .3, .55)                 // pectorals tuck when sprinting
-    f.u.uFinBeat.value = 2.5 + (1 - f.u.uFold.value) * 2.5
+    // tail and fin beats: a rate from speed (≈ .65 Hz cruising, ≈ 1 Hz in a flick), eased, integrated into a phase.
+    // Never sin(uTime·rate) with a changing rate: with page-time uTime in the thousands every change jumps the phase → a twitchy tail.
+    const k = ease1(dt, 1.5)
+    f.swimW = THREE.MathUtils.lerp(f.swimW ?? 4, 2.6 + spn * 8, k); f.u.uSwim.value = (f.u.uSwim.value + f.swimW * dt) % 6283.2
+    f.finW = THREE.MathUtils.lerp(f.finW ?? 2.5, 1.6 + (1 - f.u.uFold.value) * 1.6, k); f.u.uFinBeat.value = (f.u.uFinBeat.value + f.finW * dt) % 6283.2
   }
 }

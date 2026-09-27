@@ -19,12 +19,12 @@ export const KOI_VERTEX = /* glsl */`{
   vObj = position; vFin = finData;
   float s = clamp((position.x + .30)/.58, 0., 1.);            // 0 tail tip … 1 snout
   float amp = uAmp * (.010 + .085*pow(1.-s, 2.2));           // travelling wave, amplitude grows toward the tail
-  transformed.z += amp * sin(position.x*10.5 - uTime*uSwim + uPhase);
+  transformed.z += amp * sin(position.x*10.5 - uSwim + uPhase);      // uSwim / uFinBeat are PHASES integrated on the CPU (see koi-boids.js)
   float bx = position.x - .14; transformed.z += uTurn * bx*bx * 2.2;   // whole-body C-bend ∝ turn rate
   float side = finData.g > .5 ? -1. : 1.;
-  transformed.y += finData.r * (sin(uTime*uFinBeat + (side>0.?0.:1.3)) * .016 - uFold*.004);   // pectorals flap…
+  transformed.y += finData.r * (sin(uFinBeat + (side>0.?0.:1.3)) * .016 - uFold*.004);   // pectorals flap…
   transformed.z += finData.r * side * uFold * -.028;                                            // …and tuck when sprinting
-  transformed.z += finData.b * sin(uTime*7.5 + position.x*28. + position.y*37.) * .0045;       // free edges flutter
+  transformed.z += finData.b * sin(uTime*4.5 + position.x*28. + position.y*37.) * .0045;       // free edges flutter
 }`
 
 // fragment: pattern from object-space position, one variety uniform per fish

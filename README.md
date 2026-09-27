@@ -60,7 +60,7 @@ can use directly.
 | Skill | What it gives you | 中文说明 |
 |---|---|---|
 | [threejs-webgl-realistic-water](skills/threejs-webgl-realistic-water) | Depth-aware refraction, Beer–Lambert absorption, planar reflection, shadowed sun glints, mipmapped ripple normals, caustics, pebble riverbed | 基于深度的折射、比尔–朗伯吸收、平面反射、带阴影的阳光高光、Mipmap 涟漪法线、焦散、卵石河床 |
-| [threejs-webgl-underwater-effect](skills/threejs-webgl-underwater-effect) | Diving below the surface: Snell's window, total internal reflection, light shafts, bubbles, underwater grade | 潜入水面之下：斯涅尔窗、全内反射、光柱、气泡、水下调色 |
+| [threejs-webgl-underwater-effect](skills/threejs-webgl-underwater-effect) | Diving below the surface: Snell's window, total internal reflection, light shafts, bubbles, underwater grade, and an over-under lens (half above / half below the waterline) | 潜入水面之下：斯涅尔窗、全内反射、光柱、气泡、水下调色，以及水线分屏镜头（半水上半水下） |
 | [threejs-boat-buoyancy-steering](skills/threejs-boat-buoyancy-steering) | Gerstner waves shared by GPU and CPU, buoyant boat, smooth drifting lane, click-to-steer with autopilot, chase camera | GPU 与 CPU 共用的 Gerstner 波、浮力小船、平滑漂流航线、点击掌舵与自动驾驶、追随相机 |
 | [threejs-webgl-wake-simulation](skills/threejs-webgl-wake-simulation) | Kelvin wake — analytic, then a GPU iWave height-field simulation with foam and bow wave | 开尔文尾迹：先用解析模型，再用 GPU iWave 高度场模拟，含泡沫与船首波 |
 | [threejs-webgl-waterfall-effect](skills/threejs-webgl-waterfall-effect) | Waterfall off a real cliff lip into a carved plunge basin: layered sheets, spray, rainbow, mist | 从真实崖口倾泻入冲刷潭的瀑布：分层水幕、水雾、彩虹、薄雾 |
