@@ -9,6 +9,16 @@
 > [riverbook.tanhoochuan.my](https://riverbook.tanhoochuan.my/), grab this repo and try them
 > yourself.**
 
+## Showcase
+
+Clips from the scene these skills came from. Click a preview to open the 720p video.
+
+| | |
+|---|---|
+| [![Boat circling on the river](media/preview/boat-circle.gif)](media/boat-circle.mp4)<br>**Boat on the river**: water, buoyancy, wake | [![Day turning to night](media/preview/boat-day-night.gif)](media/boat-day-night.mp4)<br>**Day into night**: day cycle, night mode |
+| [![Diving underwater](media/preview/boat-underwater.gif)](media/boat-underwater.mp4)<br>**Below the surface**: underwater effect, koi | [![Floating lanterns at night](media/preview/night-lantern.gif)](media/night-lantern.mp4)<br>**Lanterns at night**: lanterns, fireflies, moonlit water |
+| [![A book that writes itself](media/preview/book-read.gif)](media/book-read.mp4)<br>**The self-writing book**: object interaction | |
+
 Agent skills for building a hand-painted, **Ghibli-style 3D world in three.js / WebGL**:
 realistic river water, toon-shaded foliage, painterly skies, a moonlit night, weather,
 swimming creatures, cinematic interaction, guided camera tours, and the headless-Blender →
