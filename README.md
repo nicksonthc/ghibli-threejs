@@ -1,5 +1,7 @@
 # ghibli-threejs
 
+[![Ghibli Threejs on AI Agents Listing](https://aiagentslisting.com/ghibli-threejs/badge.svg?claim=14550f711b005609d7b45ffee3d59462)](https://aiagentslisting.com/mcp/ghibli-threejs)
+
 > ## 🌿 A note from the author
 >
 > **While building my Ghibli river 3D project, I spent days iterating on it, one improvement
