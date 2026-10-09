@@ -86,6 +86,25 @@ Stair treads must be deeper than the radius, wall probes start above step height
 - Lift: a glowing circle under an oculus; E floats her up over ~4 s (smoothstep) onto a glass
   lens that counts as floor. Hide her and damp the additive beam when the eye is inside it.
 
+### A realistic character (optional)
+- **Source:** a primitive toy figure reads as cartoon up close. For a realistic one, generate a CC0 human with
+  MakeHuman's Blender add-on MPFB:
+  - Run it headless, in its own `BLENDER_USER_RESOURCES` profile so the user's Blender is untouched.
+  - Use the `makehuman_system_assets` and `dress01` packs.
+  - Use the `game_engine` rig.
+- **Actions:** key walk, run, idle and float procedurally as armature-space rotations converted to bone-local
+  (`R⁻¹·Q·R`), and export them as NLA tracks.
+- **Size:** after `gltf-transform optimize` (Draco, WebP at 1024) the character with all four clips is about 0.7 MB.
+- **Runtime:** an `AnimationMixer` cross-fades on speed, with walk `timeScale = speed/1.35` so the feet don't skate.
+  Keep the toy as the load-failure fallback.
+- **Pitfalls:**
+  - Apply and remove MPFB's shape keys before export. Otherwise the body ships as about 5 MB of morph targets.
+  - The high-poly eye's cornea shell has alpha 0. Use `alphaTest` .5, or the eye renders white.
+  - Keep the eye's clearcoat low (≈ .35 at roughness .3). A mirror-glossy eye reflects the sky.
+  - The exporter marks every material `BLEND`. Set skin, dress and shoes opaque, and hair to `alphaTest`.
+  - The rest pose is an A-pose with elbows bent about 46°. Leave about 14° of arm clearance, or the hands poke through a
+    flared skirt.
+
 ### Headless soak test (`references/walk-soak-test.mjs`)
 Expose `walkMove`, `walkGround`, `walk` on a debug handle. **Flood-fill:** from the spawn,
 8 headings × 0.3 s of real `walkMove`, bucket to 1 m cells, BFS. **Hug-and-return:** from
