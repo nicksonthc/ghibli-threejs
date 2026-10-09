@@ -49,6 +49,30 @@ Playwright (`npm i playwright`), Chrome installed.
 6. Shot list as data: `{ name, pos | posExpression, target, night, js, frames, log }` —
    see `references/capture.cjs` (template).
 
+### Heavy pages: a manual clock, a fixed state, your own browser
+- On a heavy scene `page.screenshot` timed out. Stop the loop and drive it:
+  `renderer.setAnimationLoop(null)`, then `frame(T += 33)` N times and
+  `canvas.toDataURL('image/jpeg', .9)` in the **same** evaluate. Keep `T` on `window` so
+  successive shots continue one clock.
+- Force a known state before **every** capture (`WEATHER.mode = 'clear'`, rain 0, night off):
+  otherwise rain streaks land in some views of a comparison and not others.
+- When the user has their own browser automation or a Blender session running, launch your
+  own headless Chrome (`chromium.launch`, not their tab) on your own port (e.g. 8791, not a
+  port another project serves) and a separate `blender --background --factory-startup`
+  process. Never reuse their tab or server.
+- To point the camera far from the orbit target, disable OrbitControls and clear its
+  min/max distance and polar limits first — `controls.update()` silently pulls the camera in.
+
+### Critic-agent score loop (iterate until it plateaus)
+> Capture fixed views of every object in `{{landmark}}` (exterior orbit poses + interior
+> first-person poses), have a critic agent score each object 1–10 on a fixed rubric
+> (`{{e.g. 40 % form, 30 % storytelling, 30 % paint}}`), rank them, and fix the lowest first.
+> Re-capture the same views, re-score with the same rubric, and stop when the mean gains
+> < ~0.1 over the previous round.
+- Keep the shot list and rubric identical across rounds, or the scores don't compare.
+- Re-capture **after** every fix; a critic scoring stale frames flags problems already fixed.
+- On a 21-object sky castle the mean went 4.80 → 5.12 → 5.27 → 5.35 and stopped at Δ .08.
+
 ### Numeric checks beat eyeballing
 Project objects to NDC once per 0.6 s to prove they cross the frame; walk path samples for
 clearance; print height grids around placements; log `renderer.info` and state at shot time
@@ -115,4 +139,5 @@ checked where they exist.
 
 ## Related skills
 threejs-webgl-performance-profiling · threejs-camera-guided-tour · threejs-object-interaction ·
-threejs-cinematic-loading-screen · threejs-ghibli-night-mode · threejs-blender-glb-pipeline
+threejs-cinematic-loading-screen · threejs-ghibli-night-mode · threejs-blender-glb-pipeline ·
+threejs-floating-island-landmark · threejs-first-person-bvh-walk

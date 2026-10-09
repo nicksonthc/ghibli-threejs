@@ -137,6 +137,13 @@ browsers drop stale copies.
 - `computeVertexNormals()` on non-indexed geometry gives flat facets — keep lathe normals.
 - Angle-based smoothing keeps hex/box edges crisp. Vermilion needs ~(.29, .021, .0065) linear
   or it goes salmon. Bolt pairs on a blank round sign read as eyes.
+- **Global rng drift.** A helper like `sphere(jitter=…)` that draws from the module's global
+  `rng` once per vertex makes the whole layout order-dependent: adding a jittered primitive,
+  or changing an existing one's `detail` (vertex count), reshuffles every later draw and
+  moves trees, shrubs and roots you never touched. Give every new feature its own
+  `random.Random(seed)` (or an `@own_rng` decorator that swaps the global for the call), never
+  change the detail of a jittered primitive, and diff the exported placement JSON (plants,
+  spots) after every run — it must be byte-identical unless you meant to move something.
 - A long background Blender agent can stall; ask it to keep each tool call short. A resume
   message works if it wrote nothing.
 
@@ -155,4 +162,4 @@ browsers drop stale copies.
 ## Related skills
 threejs-procedural-vegetation · threejs-open-world-streaming · threejs-shell-fur-rendering ·
 threejs-stylized-rock-material · threejs-fish-school-boids · threejs-webgl-performance-profiling ·
-threejs-headless-visual-verification
+threejs-headless-visual-verification · threejs-floating-island-landmark · threejs-first-person-bvh-walk

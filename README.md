@@ -19,7 +19,7 @@ Clips from the scene these skills came from. Click a preview to open the 720p vi
 |---|---|
 | [![Boat circling on the river](media/preview/boat-circle.gif)](media/boat-circle.mp4)<br>**Boat on the river**: water, buoyancy, wake | [![Day turning to night](media/preview/boat-day-night.gif)](media/boat-day-night.mp4)<br>**Day into night**: day cycle, night mode |
 | [![Diving underwater](media/preview/boat-underwater.gif)](media/boat-underwater.mp4)<br>**Below the surface**: underwater effect, koi | [![Floating lanterns at night](media/preview/night-lantern.gif)](media/night-lantern.mp4)<br>**Lanterns at night**: lanterns, fireflies, moonlit water |
-| [![A book that writes itself](media/preview/book-read.gif)](media/book-read.mp4)<br>**The self-writing book**: object interaction | |
+| [![A book that writes itself](media/preview/book-read.gif)](media/book-read.mp4)<br>**The self-writing book**: object interaction | [![Landing on Laputa and walking into the keep](media/preview/laputa-walk.gif)](media/laputa-walk.mp4)<br>**Laputa on foot**: floating island, first-person walk |
 
 Agent skills for building a hand-painted, **Ghibli-style 3D world in three.js / WebGL**:
 realistic river water, toon-shaded foliage, painterly skies, a moonlit night, weather,
@@ -138,6 +138,7 @@ to my river") or use a skill's **paste-ready prompt** with its `{{slots}}` fille
 | [threejs-object-interaction](skills/threejs-object-interaction) | Hover ring, click-vs-drag, one-shot cinematic, a book that writes itself and flips real pages | 悬停光环、区分点击与拖拽、一镜到底的过场、会自己书写并真实翻页的书 |
 | [threejs-camera-guided-tour](skills/threejs-camera-guided-tour) | Hands-free camera journey on a time-parametrised Catmull-Rom path, day into night | 基于时间参数化 Catmull-Rom 路径的自动镜头导览，从白天到黑夜 |
 | [threejs-hud-objective-markers](skills/threejs-hud-objective-markers) | Game-style off-screen markers, fly-to arcs, minimal icon-dock HUD | 游戏式屏幕边缘目标标记、弧线飞行跳转、极简图标栏 HUD |
+| [threejs-first-person-bvh-walk](skills/threejs-first-person-bvh-walk) | Float a character onto a landmark and walk it in first person: WASD + pointer lock, touch stick, lift between floors, lamp-lit interiors, and a three-mesh-bvh capsule that never gets stuck, proven by a headless flood-fill + soak test | 让角色飘落到地标上并以第一人称行走：WASD + 指针锁定、触屏摇杆、楼层间悬浮升降、灯光照亮的室内，以及永不卡住的 three-mesh-bvh 胶囊体碰撞，经无头泛洪填充与长时漫游测试验证 |
 | [threejs-cinematic-loading-screen](skills/threejs-cinematic-loading-screen) | CSS dawn loading gate, captured still that fades into the live scene, shader warm-up | CSS 黎明风加载页、从实时场景截取的静帧淡入实景、着色器预热 |
 | [threejs-webaudio-generative-soundtrack](skills/threejs-webaudio-generative-soundtrack) | An original waltz synthesised live with Web Audio, plus river and birdsong ambience | 用 Web Audio 实时合成的原创圆舞曲，配河流与鸟鸣环境音 |
 
@@ -146,6 +147,8 @@ to my river") or use a skill's **paste-ready prompt** with its `{{slots}}` fille
 |---|---|---|
 | [threejs-open-world-streaming](skills/threejs-open-world-streaming) | A 600 m river world: water SDF, chunked terrain, tree pools, landmarks, distance culling | 600 米河流世界：水域 SDF、分块地形、树木池、地标、距离剔除 |
 | [threejs-blender-glb-pipeline](skills/threejs-blender-glb-pipeline) | Reference image → scene: asset contract, headless Blender agents, GLB export gotchas, Draco | 参考图 → 场景：资产规范、无头 Blender 代理、GLB 导出陷阱、Draco 压缩 |
+| [threejs-floating-island-landmark](skills/threejs-floating-island-landmark) | A floating sky-castle island: a headless-Blender rock cone, castle, domes and waterfalls, dressed by a material-name → procedural-shader table (matte ashlar stone, verdigris, bronze, strata rock), far haze instead of fog, slow spin and bob, glowing at night | 浮空的天空之城岛屿：无头 Blender 生成岩锥、城堡、穹顶与瀑布，按材质名映射程序化着色器（哑光方石、铜绿、青铜、岩层），以远景雾霭取代场景雾，缓慢自转与浮动，夜间发光 |
+| [threejs-glb-realism-pipeline](skills/threejs-glb-realism-pipeline) | Existing GLB / Blender scene → realistic WebGL: real-world scale, bevels, PBR textures, baked lightmaps, HDRI + AgX viewer, and a screenshot-scored critique loop | 现有 GLB / Blender 场景 → 写实 WebGL：真实比例、倒角、PBR 贴图、烘焙光照贴图、HDRI + AgX 查看器，以及基于截图评分的迭代评审 |
 | [threejs-webgl-performance-profiling](skills/threejs-webgl-performance-profiling) | Honest GPU timing, pass budgets, compile hitches, culling, LOD | 准确的 GPU 计时、渲染通道预算、编译卡顿、剔除、LOD |
 | [threejs-headless-visual-verification](skills/threejs-headless-visual-verification) | Playwright + GPU capture of WebGL frames, shot lists, and the traps that give stale frames | 用 Playwright + GPU 截取 WebGL 画面、镜头清单，以及导致过期帧的陷阱 |
 

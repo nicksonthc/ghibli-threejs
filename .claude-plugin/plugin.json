@@ -1,10 +1,10 @@
 {
   "name": "ghibli-threejs",
-  "description": "Battle-tested three.js / WebGL skills for building a hand-painted, Ghibli-style 3D world: realistic water, toon foliage, painterly sky, night mode, weather, creatures, interaction, camera tours and the Blender → GLB pipeline.",
-  "version": "1.0.0",
+  "description": "Battle-tested three.js / WebGL skills for building a hand-painted, Ghibli-style 3D world: realistic water, toon foliage, painterly sky, night mode, weather, creatures, interaction, camera tours, a floating sky-castle island you can walk in first person, and the Blender → GLB pipeline.",
+  "version": "1.1.0",
   "author": { "name": "nicksonthc" },
   "homepage": "https://github.com/nicksonthc/ghibli-threejs",
   "repository": "https://github.com/nicksonthc/ghibli-threejs",
   "license": "MIT",
-  "keywords": ["threejs", "webgl", "glsl", "shaders", "ghibli", "blender", "skills"]
+  "keywords": ["threejs", "webgl", "glsl", "shaders", "ghibli", "blender", "realism", "first-person", "skills"]
 }
