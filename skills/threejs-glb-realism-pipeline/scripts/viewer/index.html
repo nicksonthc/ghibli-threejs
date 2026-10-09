@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Realism Viewer</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #111; overflow: hidden; font-family: system-ui, sans-serif; }
+  canvas { display: block; }
+  #status { position: fixed; left: 12px; bottom: 12px; color: #ccc; font-size: 12px; background: rgba(0,0,0,.5); padding: 6px 10px; border-radius: 4px; }
+  #views { position: fixed; left: 12px; top: 12px; display: flex; gap: 6px; }
+  #views button { background: rgba(0,0,0,.6); color: #eee; border: 1px solid #444; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 12px; }
+  body.shot #status, body.shot #views, body.shot .lil-gui { display: none !important; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="views"></div>
+<div id="status">loading…</div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import GUI from 'three/addons/libs/lil-gui.module.min.js';
+
+// ---------------------------------------------------------------- params
+const q = new URLSearchParams(location.search);
+const num = (k, d) => (q.has(k) ? parseFloat(q.get(k)) : d);
+const P = {
+  model: q.get('model') || '',
+  hdri: q.get('hdri') || '',
+  exposure: num('exposure', 1.0),
+  tonemap: q.get('tonemap') || 'agx',
+  env: num('env', 1.0),
+  sun: num('sun', 2.5),
+  sunAz: num('sunAz', 35),
+  sunEl: num('sunEl', 50),
+  lightmap: q.get('lightmap') || 'auto',
+  lmIntensity: num('lmIntensity', 1.0),
+  ao: num('ao', 1),
+  bloom: num('bloom', 0.15),
+  weather: num('weather', 0.4),
+  grime: num('grime', 0.35),
+  grimeHeight: num('grimeHeight', 0.4),
+  fov: num('fov', 45),
+  bg: q.get('bg') || 'env',
+  view: q.get('view') || '',
+  shot: q.has('shot'),
+};
+if (P.shot) document.body.classList.add('shot');
+const status = (t) => (document.getElementById('status').textContent = t);
+window.__ready = false;
+
+// ---------------------------------------------------------------- renderer
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
+renderer.setPixelRatio(P.shot ? 1 : Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const TONEMAPS = { agx: THREE.AgXToneMapping, aces: THREE.ACESFilmicToneMapping, neutral: THREE.NeutralToneMapping };
+renderer.toneMapping = TONEMAPS[P.tonemap] || THREE.AgXToneMapping;
+renderer.toneMappingExposure = P.exposure;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(P.fov, innerWidth / innerHeight, 0.05, 2000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+// ---------------------------------------------------------------- environment
+const pmrem = new THREE.PMREMGenerator(renderer);
+async function loadEnvironment() {
+  let envTex;
+  if (P.hdri) {
+    const hdr = await new RGBELoader().loadAsync(P.hdri);
+    hdr.mapping = THREE.EquirectangularReflectionMapping;
+    envTex = pmrem.fromEquirectangular(hdr).texture;
+    hdr.dispose();
+  } else {
+    envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  }
+  scene.environment = envTex;
+  scene.environmentIntensity = P.env;
+  if (P.bg === 'env') {
+    scene.background = envTex;
+    scene.backgroundBlurriness = 0.35;
+    scene.backgroundIntensity = P.env;
+  } else {
+    scene.background = new THREE.Color('#' + P.bg.replace('#', ''));
+  }
+}
+
+// ---------------------------------------------------------------- sun
+const sun = new THREE.DirectionalLight(0xfff2e0, P.sun);
+sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096);
+sun.shadow.bias = -0.0002;
+sun.shadow.normalBias = 0.02;
+sun.shadow.radius = 4;
+scene.add(sun, sun.target);
+
+let bounds = new THREE.Box3(), center = new THREE.Vector3(), size = new THREE.Vector3();
+function placeSun() {
+  const r = size.length() * 0.75 || 10;
+  const az = THREE.MathUtils.degToRad(P.sunAz), el = THREE.MathUtils.degToRad(P.sunEl);
+  sun.position.set(center.x + r * Math.cos(el) * Math.sin(az), center.y + r * Math.sin(el), center.z + r * Math.cos(el) * Math.cos(az));
+  sun.target.position.copy(center);
+  const s = Math.max(size.x, size.z) * 0.6 || 10;
+  Object.assign(sun.shadow.camera, { left: -s, right: s, top: s, bottom: -s, near: 0.1, far: r * 3 });
+  sun.shadow.camera.updateProjectionMatrix();
+  sun.intensity = P.sun;
+  sun.visible = P.sun > 0;
+}
+
+// ---------------------------------------------------------------- weathering shader
+// World-space procedural imperfection injected into every MeshStandardMaterial:
+// roughness noise, albedo mottling, and grime that darkens surfaces near the floor.
+const W = {
+  uWeather: { value: P.weather },
+  uGrime: { value: P.grime },
+  uGrimeHeight: { value: P.grimeHeight },
+  uFloorY: { value: 0 },
+};
+const NOISE = /* glsl */`
+  varying vec3 vRealismWorldPos;
+  uniform float uWeather, uGrime, uGrimeHeight, uFloorY;
+  float rh(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+  float rn(vec3 x){ vec3 i = floor(x), f = fract(x); f = f*f*(3.0-2.0*f);
+    return mix(mix(mix(rh(i),rh(i+vec3(1,0,0)),f.x), mix(rh(i+vec3(0,1,0)),rh(i+vec3(1,1,0)),f.x),f.y),
+               mix(mix(rh(i+vec3(0,0,1)),rh(i+vec3(1,0,1)),f.x), mix(rh(i+vec3(0,1,1)),rh(i+vec3(1,1,1)),f.x),f.y), f.z); }
+  float rfbm(vec3 p){ float a = 0.5, s = 0.0; for (int i = 0; i < 4; i++) { s += a * rn(p); p *= 2.03; a *= 0.5; } return s; }
+`;
+function applyWeathering(mat) {
+  if (!mat.isMeshStandardMaterial || mat.userData.realism) return;
+  mat.userData.realism = true;
+  mat.onBeforeCompile = (shader) => {
+    Object.assign(shader.uniforms, W);
+    shader.vertexShader = 'varying vec3 vRealismWorldPos;\n' + shader.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>
+      vec4 rwp = vec4(transformed, 1.0);
+      #ifdef USE_INSTANCING
+        rwp = instanceMatrix * rwp;
+      #endif
+      vRealismWorldPos = (modelMatrix * rwp).xyz;`);
+    shader.fragmentShader = NOISE + shader.fragmentShader
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        float rMot = rfbm(vRealismWorldPos * 0.7);
+        diffuseColor.rgb *= 1.0 - uWeather * 0.18 * (rMot - 0.3);
+        float rH = clamp(1.0 - (vRealismWorldPos.y - uFloorY) / max(uGrimeHeight, 0.001), 0.0, 1.0);
+        float rG = rH * rH * smoothstep(0.25, 0.75, rfbm(vRealismWorldPos * vec3(3.0, 0.8, 3.0)));
+        diffuseColor.rgb *= 1.0 - uGrime * 0.55 * rG;`)
+      .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
+        float rRn = rfbm(vRealismWorldPos * 1.7 + 11.0);
+        roughnessFactor = clamp(roughnessFactor * (1.0 + uWeather * 0.6 * (rRn - 0.45)) + uGrime * 0.15 * rG, 0.03, 1.0);`);
+  };
+  mat.needsUpdate = true;
+}
+
+// ---------------------------------------------------------------- lightmaps
+// The Blender pass exports baked lighting through the glTF occlusion slot (TEXCOORD_1).
+// Promote it to a real lightMap so it adds bounce light instead of only darkening ambient.
+let lightmapped = 0;
+function promoteLightmap(mat) {
+  if (P.lightmap === 'off' || !mat.aoMap || mat.userData.lmDone) return;
+  mat.userData.lmDone = true;
+  mat.lightMap = mat.aoMap;
+  mat.lightMap.channel = mat.aoMap.channel;
+  mat.lightMapIntensity = P.lmIntensity * Math.PI;
+  mat.aoMap = null;
+  mat.needsUpdate = true;
+  lightmapped++;
+}
+
+// ---------------------------------------------------------------- model
+async function loadModel() {
+  const loader = new GLTFLoader();
+  loader.setDRACOLoader(new DRACOLoader().setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/'));
+  loader.setKTX2Loader(new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/basis/').detectSupport(renderer));
+  loader.setMeshoptDecoder(MeshoptDecoder);
+  const gltf = await loader.loadAsync(P.model, (e) => e.total && status(`loading ${(100 * e.loaded / e.total).toFixed(0)}%`));
+  const root = gltf.scene;
+  // Only promote occlusion maps when the Blender pass wrote them as lightmaps (UV set 2 present),
+  // otherwise genuine AO maps from other tools would be misused.
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    o.castShadow = o.receiveShadow = true;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    const hasUV2 = !!o.geometry.attributes.uv1;
+    for (const m of mats) {
+      if (hasUV2 && P.lightmap !== 'off') promoteLightmap(m);
+      applyWeathering(m);
+      if (m.map) m.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      if (m.emissiveIntensity !== undefined && m.emissive && m.emissive.getHex() > 0) o.castShadow = false;
+    }
+  });
+  scene.add(root);
+  bounds.setFromObject(root);
+  bounds.getCenter(center);
+  bounds.getSize(size);
+  W.uFloorY.value = bounds.min.y;
+  if (lightmapped) { P.sun = q.has('sun') ? P.sun : P.sun * 0.35; }
+  return root;
+}
+
+// ---------------------------------------------------------------- camera views
+// Fixed, repeatable views derived from the bounds so every iteration compares the same shots.
+const views = {};
+function buildViews() {
+  const eye = bounds.min.y + 1.7;
+  const span = Math.max(size.x, size.z);
+  views.overview = { pos: [center.x + size.x * 0.75, bounds.min.y + Math.max(size.y * 1.4, span * 0.45), center.z + size.z * 0.9], target: [center.x, bounds.min.y + size.y * 0.25, center.z] };
+  views.eye = { pos: [bounds.min.x + size.x * 0.12, eye, bounds.min.z + size.z * 0.12], target: [center.x, eye - 0.3, center.z] };
+  views.aisle = { pos: [center.x, eye, bounds.max.z - size.z * 0.05], target: [center.x, eye - 0.1, bounds.min.z] };
+  // Close-up: look at the floor/wall junction a few meters ahead, where grime, bevels and contact shadows show.
+  const d = Math.min(4, span * 0.15);
+  views.close = { pos: [center.x - d, bounds.min.y + 1.2, center.z - d * 0.4], target: [center.x, bounds.min.y + 0.5, center.z] };
+  const box = document.getElementById('views');
+  box.innerHTML = '';
+  for (const name of Object.keys(views)) {
+    const b = document.createElement('button');
+    b.textContent = name; b.onclick = () => setView(name);
+    box.appendChild(b);
+  }
+}
+function setView(name) {
+  const v = views[name] || views.eye;
+  camera.position.set(...v.pos);
+  controls.target.set(...v.target);
+  camera.near = Math.max(0.02, size.length() / 5000);
+  camera.far = size.length() * 10;
+  camera.updateProjectionMatrix();
+  controls.update();
+}
+window.__views = () => Object.keys(views);
+window.__setView = async (name) => { setView(name); await settle(); return true; };
+
+// ---------------------------------------------------------------- post-processing
+let composer, gtao, bloom;
+function buildComposer() {
+  composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  gtao = new GTAOPass(scene, camera, innerWidth, innerHeight);
+  gtao.updateGtaoMaterial({ radius: Math.min(1.0, size.length() / 40 + 0.25), distanceFallOff: 1.0, thickness: 1.0 });
+  gtao.blendIntensity = 1.0;
+  gtao.enabled = !!P.ao;
+  composer.addPass(gtao);
+  bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), P.bloom, 0.4, 0.9);
+  bloom.enabled = P.bloom > 0;
+  composer.addPass(bloom);
+  composer.addPass(new SMAAPass(innerWidth * renderer.getPixelRatio(), innerHeight * renderer.getPixelRatio()));
+  composer.addPass(new OutputPass());
+}
+
+function settle(frames = 12) {
+  return new Promise((res) => { let n = 0; const tick = () => { render(); if (++n >= frames) res(); else requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
+}
+
+function render() { controls.update(); composer.render(); }
+
+// ---------------------------------------------------------------- GUI
+function buildGUI() {
+  if (P.shot) return;
+  const gui = new GUI({ title: 'Realism' });
+  const upd = () => {
+    renderer.toneMapping = TONEMAPS[P.tonemap];
+    renderer.toneMappingExposure = P.exposure;
+    scene.environmentIntensity = P.env;
+    if (P.bg === 'env') scene.backgroundIntensity = P.env;
+    W.uWeather.value = P.weather; W.uGrime.value = P.grime; W.uGrimeHeight.value = P.grimeHeight;
+    gtao.enabled = !!P.ao; bloom.enabled = P.bloom > 0; bloom.strength = P.bloom;
+    camera.fov = P.fov; camera.updateProjectionMatrix();
+    scene.traverse((o) => { if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => { if (m.lightMap) m.lightMapIntensity = P.lmIntensity * Math.PI; }); });
+    placeSun();
+  };
+  gui.add(P, 'tonemap', Object.keys(TONEMAPS)).onChange(upd);
+  gui.add(P, 'exposure', 0.2, 3, 0.01).onChange(upd);
+  gui.add(P, 'env', 0, 3, 0.01).onChange(upd);
+  const s = gui.addFolder('Sun'); s.add(P, 'sun', 0, 10, 0.05).onChange(upd); s.add(P, 'sunAz', 0, 360, 1).onChange(upd); s.add(P, 'sunEl', 2, 89, 1).onChange(upd);
+  gui.add(P, 'lmIntensity', 0, 4, 0.01).name('lightmap').onChange(upd);
+  gui.add(P, 'ao', 0, 1, 1).onChange(upd);
+  gui.add(P, 'bloom', 0, 1, 0.01).onChange(upd);
+  const w = gui.addFolder('Weathering'); w.add(P, 'weather', 0, 1, 0.01).onChange(upd); w.add(P, 'grime', 0, 1, 0.01).onChange(upd); w.add(P, 'grimeHeight', 0, 2, 0.01).onChange(upd);
+  gui.add(P, 'fov', 20, 90, 1).onChange(upd);
+  gui.add({ copy() {
+    const keys = ['exposure', 'tonemap', 'env', 'sun', 'sunAz', 'sunEl', 'lmIntensity', 'ao', 'bloom', 'weather', 'grime', 'grimeHeight', 'fov'];
+    const str = keys.map((k) => `${k}=${P[k]}`).join('&');
+    navigator.clipboard?.writeText(str); console.log('[realism params]', str); status('params copied: ' + str);
+  } }, 'copy').name('copy params');
+}
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight);
+});
+
+// ---------------------------------------------------------------- boot
+(async () => {
+  try {
+    if (!P.model) { status('add ?model=path/to/scene.glb'); return; }
+    await loadEnvironment();
+    await loadModel();
+    placeSun();
+    buildViews();
+    setView(P.view || 'eye');
+    buildComposer();
+    buildGUI();
+    await settle(20);
+    status(`${P.model} · ${size.x.toFixed(1)}×${size.y.toFixed(1)}×${size.z.toFixed(1)} m · lightmapped meshes: ${lightmapped}`);
+    window.__info = { size: size.toArray(), lightmapped, views: Object.keys(views) };
+    window.__ready = true;
+    if (!P.shot) renderer.setAnimationLoop(render);
+  } catch (e) {
+    console.error(e); status('ERROR: ' + e.message); window.__error = String(e.message || e);
+  }
+})();
+</script>
+</body>
+</html>

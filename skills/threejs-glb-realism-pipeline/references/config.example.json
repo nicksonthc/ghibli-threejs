@@ -1,0 +1,24 @@
+{
+  "scale": 1.0,
+  "bevel": { "enabled": true, "width": 0.01, "segments": 2, "angle_deg": 30, "max_faces": 50000 },
+  "textures": {
+    "enabled": false,
+    "uv_box_size_m": 2.0,
+    "map": {
+      "*floor*|*ground*|*concrete*": "textures/Concrete034_2K",
+      "*wall*|*cladding*": "textures/CorrugatedSteel005_2K",
+      "*rack*|*upright*": "textures/PaintedMetal006_2K",
+      "*beam*": "textures/PaintedMetal004_2K"
+    }
+  },
+  "lights": "keep",
+  "bake": {
+    "enabled": false,
+    "samples": 64,
+    "default_resolution": 512,
+    "large_resolution": 1024,
+    "large_area_m2": 50,
+    "margin": 8,
+    "skip": ["*glass*", "*light*", "*emiss*"]
+  }
+}
